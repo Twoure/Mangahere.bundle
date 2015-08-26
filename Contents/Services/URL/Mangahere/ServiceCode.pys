@@ -1,10 +1,10 @@
 RE_PAGES = Regex("total_pages = (\d+)")
-RE_IMAGE_URL = Regex("<img src=\"([^']*)\?")
+#RE_IMAGE_URL = Regex("<img src=\"([^']*)\?")
 
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url
+  return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -20,8 +20,8 @@ def GetPhotos(url):
 	token = url.rsplit('/', 1)
 	for page in range(1, pages+1):
 		page_url = token[0] + '/%d.html' % page
-		raw = HTTP.Request(page_url).content
-		img_url = RE_IMAGE_URL.search(raw).group(1)
+		raw = HTML.ElementFromURL(page_url)
+		img_url = raw.xpath('//section[@class="read_img"]/a/img')[0].get('src').split('?')[0]
 		oc.add(PhotoObject(key=img_url, title=str(page), thumb=None))
 
 	return oc
