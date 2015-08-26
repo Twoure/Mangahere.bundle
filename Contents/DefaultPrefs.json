@@ -1,0 +1,9 @@
+[
+  {
+    "id": "sort_opt",
+    "label": "Sorting Option",
+    "type": "enum",
+    "values": ["A-Z", "Z-A", "Ratings: High-Low", "Ratings: Low-High", "Views: High-Low", "Views: Low-High", "Latest Updated"],
+    "default": "A-Z"
+  }
+]
