@@ -4,13 +4,20 @@
 <dict>
 	<key>URL</key>
 	<dict>
-		<key>Mangahere</key>
+		<key>MangaHere</key>
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-        <string>^http://(?:www.|m.|)mangahere.(?:co|com)/manga/.*?/c(\d+|\d+.\d+)/(?:\d+.html|)$</string>
+        <string>^http://(?:www.|m.|)mangahere.(?:co|com)/manga/.*?/c(?:\d+|\d+.\d+)/(?:\d+.html|)$</string>
 			</array>
-		</dict>
+    </dict>
+    <key>MangaFox</key>
+    <dict>
+      <key>URLPatterns</key>
+      <array>
+        <string>^http://(?:www.|m.|)mangafox.(?:me|com)/manga/.*?/c\d+/\d+.html$</string>
+      </array>
+    </dict>
 	</dict>
 </dict>
 </plist>

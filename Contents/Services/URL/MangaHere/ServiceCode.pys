@@ -1,0 +1,67 @@
+#!/usr/bin/env python
+
+"""MangaHere Service code - Want it to gather all info on Manga and retrieve image urls."""
+
+####################################################################################################
+def NormalizeURL(url):
+    """This function should return a 'normalised' version of the given URL. Plex uses the URL"""
+
+    return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+    """
+    This function should create and return a metadata object (for example, a VideoClipOb-
+    ject) and populate it with metadata from the given URL. Only the metadata should be
+    added here - the object's key and rating_key properties will be synthesised based on the URL.
+    """
+
+    return PhotoAlbumObject(key=Callback(GetPhotos, url))
+#        key=Callback(GetPhotos, url=url),
+#        title = title,
+#        summary = summary,
+#        thumb = thumb,
+#        originally_available_at = date
+#    )
+
+####################################################################################################
+def MediaObjectsForURL(url):
+    """
+    This function should create and return a list of media objects and part objects representing
+    the media available at the given URL. Callbacks may be used if obtaining the final media
+    location requires additional computation.
+    """
+
+    return [
+        MediaObject(
+            parts=Callback(GetPhotos, url)
+        )
+    ]
+
+####################################################################################################
+def GetPhotos(url):
+    """
+    This function pulls down all the image urls for a chapter and adds them to the
+    'PhotoObject' container.
+    """
+
+    oc = ObjectContainer()
+
+    raw = HTTP.Request(url).content
+    pages = int(Regex('total_pages = (\d+)').search(raw).group(1))
+    token = url.rsplit('/', 1)
+    for page in range(1, pages+1):
+        page_url = token[0] + '/%d.html' % page
+        raw = HTML.ElementFromURL(page_url)
+        #raw = HTTP.Request(page_url).content
+        img_url = raw.xpath('//section[@class="read_img"]/a/img')[0].get('src').split('?')[0]
+        #img_url = Regex("<img src=\"([^']*)\?").search(raw).group(1)
+        oc.add(
+            PhotoObject(
+                key=img_url,
+                title=str(page),
+                thumb=img_url
+            )
+        )
+
+    return oc
