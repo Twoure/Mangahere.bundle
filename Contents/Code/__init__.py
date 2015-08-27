@@ -1,8 +1,6 @@
 PLUGIN_PREFIX = '/photos/Mangahere'
 PLUGIN_TITLE = 'Mangahere'
 ROOT_URL = 'http://www.mangahere.co'
-#RE_PAGES = Regex("total_pages = (\d+)")
-#RE_IMAGE_URL = Regex("<img src=\"([^']*)\?")
 
 MANGAHERE_QUERY = ROOT_URL + '/search.php?name_method=cw&name=%s&author_method=cw&artist_method=cw&released_method=eq&advopts=1'
 
@@ -13,7 +11,7 @@ ICON = 'icon-default.png'
 ####################################################################################################
 
 def Start():
-    Plugin.AddPrefixHandler(PLUGIN_PREFIX, MainMenu, PLUGIN_TITLE, ICON, ART)
+#    Plugin.AddPrefixHandler(PLUGIN_PREFIX, MainMenu, PLUGIN_TITLE, ICON, ART)
     Plugin.AddViewGroup('ImageStream', viewMode='Pictures', mediaType='items')
     Plugin.AddViewGroup('List', viewMode='List', mediaType='items')
     Plugin.AddViewGroup('InfoList', viewMode='InfoList', mediaType='items')
@@ -28,7 +26,7 @@ def Start():
     HTTP.CacheTime = 0  # 0 sec cache time
 
 ####################################################################################################
-
+@handler(PLUGIN_PREFIX, PLUGIN_TITLE, ICON, ART)
 def MainMenu():
     oc = ObjectContainer(view_group='List')
     oc.add(DirectoryObject(key=Callback(AlphabetList), title='Alphabets'))
