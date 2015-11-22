@@ -186,7 +186,7 @@ def MangaPage(manga, title):
 
     for node in html.xpath('//div[@class="detail_list"]//li//a'):
         url = node.get('href') + '1.html'
-        title = (node.text).strip()
+        title = (node.text).replace(title, '').strip()
         oc.add(PhotoAlbumObject(url=url, title=title))
 
     return oc
