@@ -16,13 +16,7 @@ def MetadataObjectForURL(url):
     added here - the object's key and rating_key properties will be synthesised based on the URL.
     """
 
-    return PhotoAlbumObject(key=Callback(GetPhotos, url))
-#        key=Callback(GetPhotos, url=url),
-#        title = title,
-#        summary = summary,
-#        thumb = thumb,
-#        originally_available_at = date
-#    )
+    return PhotoAlbumObject(key=Callback(GetPhotos, url=url))
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -32,11 +26,7 @@ def MediaObjectsForURL(url):
     location requires additional computation.
     """
 
-    return [
-        MediaObject(
-            parts=Callback(GetPhotos, url)
-        )
-    ]
+    return [MediaObject(parts=Callback(GetPhotos, url=url))]
 
 ####################################################################################################
 def GetPhotos(url):
@@ -45,23 +35,36 @@ def GetPhotos(url):
     'PhotoObject' container.
     """
 
-    oc = ObjectContainer()
+    html = HTML.ElementFromURL(url)
 
-    raw = HTTP.Request(url).content
-    pages = int(Regex('total_pages = (\d+)').search(raw).group(1))
-    token = url.rsplit('/', 1)
-    for page in range(1, pages+1):
-        page_url = token[0] + '/%d.html' % page
-        raw = HTML.ElementFromURL(page_url)
-        #raw = HTTP.Request(page_url).content
-        img_url = raw.xpath('//section[@class="read_img"]/a/img')[0].get('src').split('?')[0]
-        #img_url = Regex("<img src=\"([^']*)\?").search(raw).group(1)
+    node = html.xpath('//select[@class="wid60"]')[0]
+    page_list = node.xpath('./option/@value')
+    chapter_title = html.xpath('//section[@class="readpage_top"]/div[@class="title"]//a/text()')[0].strip()
+
+    oc = ObjectContainer(title1='MangaHere', title2=chapter_title)
+
+    for i, page_url in enumerate(page_list):
+        if i == 0:
+            img_url = html.xpath('//section[@id="viewer"]/a/img[@onload]')[0].get('src').split('?')[0].strip()
+        else:
+            sub_html = HTML.ElementFromURL(page_url)
+            img_url = sub_html.xpath('//section[@id="viewer"]/a/img[@onload]')[0].get('src').split('?')[0].strip()
+
+        r_title = Regex('^(.+?)(\d+)\.(jpg|JPG|png|PNG)').search(img_url)
+        if r_title
+            title = r_title.group(2)
+        else:
+            title = img_url.split('/')[-1].split('.')[0]
+
+        Log.Debug('*' * 80)
+        Log.Debug('* %s | %s' %(img_url, title))
+        Log.Debug('*' * 80)
+
         oc.add(
             PhotoObject(
                 key=img_url,
-                title=str(page),
+                title=title.strip(),
                 thumb=img_url
-            )
-        )
+            ))
 
     return oc

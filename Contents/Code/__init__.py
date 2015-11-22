@@ -4,14 +4,13 @@ ROOT_URL = 'http://www.mangahere.co'
 
 MANGAHERE_QUERY = ROOT_URL + '/search.php?name_method=cw&name=%s&author_method=cw&artist_method=cw&released_method=eq&advopts=1'
 
-ART = 'art-default.png'
+randomArt = Util.RandomInt(1, 3)
+ART = 'art-default_' + str(randomArt) + '.png'
 ICON = 'icon-default.png'
-#PREFS_ICON = 'icon-prefs.png'
 
 ####################################################################################################
 
 def Start():
-#    Plugin.AddPrefixHandler(PLUGIN_PREFIX, MainMenu, PLUGIN_TITLE, ICON, ART)
     Plugin.AddViewGroup('ImageStream', viewMode='Pictures', mediaType='items')
     Plugin.AddViewGroup('List', viewMode='List', mediaType='items')
     Plugin.AddViewGroup('InfoList', viewMode='InfoList', mediaType='items')
@@ -21,8 +20,6 @@ def Start():
     ObjectContainer.view_group = 'InfoList'
     DirectoryObject.thumb = R(ICON)
 
-#    HTTP.CacheTime = CACHE_1DAY  # 1 day cache time
-#    HTTP.CacheTime = 600  # 10 min cache time
     HTTP.CacheTime = 0  # 0 sec cache time
 
 ####################################################################################################
@@ -31,7 +28,7 @@ def MainMenu():
     oc = ObjectContainer(view_group='List')
     oc.add(DirectoryObject(key=Callback(AlphabetList), title='Alphabets'))
     oc.add(DirectoryObject(key=Callback(GenreList), title='Genres'))
-    oc.add(PrefsObject(title='Preferences', thumb=None))
+    oc.add(PrefsObject(title='Preferences'))
     oc.add(InputDirectoryObject(key=Callback(Search), title='Search Manga', prompt='Search Manga'))
     return oc
 
@@ -55,26 +52,20 @@ def ValidatePrefs():
     elif Prefs['sort_opt'] == 'Latest Updated':
         Dict['s_opt'] = 'last_chapter_time.za'
     Dict.Save()
-#    s_opt = Dict['s_opt']
-#    HTTP.Request(
-#        'http://localhost:32400/:/plugins/com.plexapp.plugins.mangahere/prefs/set?sort_opt=%s' % s_opt,
-#        immediate=True
-#        )
-    # Does save but the channel has a cache time which interfers with instant updates
-    # Still working on a solution for the cache time problem
 
 ####################################################################################################
 
 @route(PLUGIN_PREFIX + '/alphabets')
 def AlphabetList():
     oc = ObjectContainer(title2='Manga By #, A-Z', view_group='List')
-    oc.add(DirectoryObject(key=Callback(DirectoryList, page=1, pname='9', ntitle='#'), title='#'))
-    for pname in map(chr, range(ord('A'), ord('Z')+1)):
+    for pname in ['#'] + map(chr, range(ord('A'), ord('Z')+1)):
         oc.add(DirectoryObject(
-            key=Callback(DirectoryList, page=1, pname=pname.lower(), ntitle=pname),
+            key=Callback(DirectoryList, page=1, pname=pname.lower() if not '#' else '9', ntitle=pname),
             title=pname
             ))
+
     Log('Built ABC... Directory')
+
     return oc
 
 ####################################################################################################
@@ -83,21 +74,21 @@ def AlphabetList():
 def GenreList():
     url = ROOT_URL + '/directory/'  # set url for populating genres array
     html = HTML.ElementFromURL(url)  # formate url response into html so we can use xpath
-    genres = []  # initalize empty genres array
+
+    oc = ObjectContainer(title2='Manga By Genres', view_group='List')
+
     # For loop to pull out valid genres
     for node in html.xpath('//ul[@class="by_categories clearfix"]/li/a'):
-        genres.append(node.get('href') + node.text)  # append results to empty array
-    # Start main function. Declare oc so it can be filled at the end with oc.add
-    oc = ObjectContainer(title2='Manga By Genres', view_group='List')
-    # Building the DirectoryList of Genres
-    for title in genres:
+        title = node.get('href') + node.text  # append results to empty array
         pname = title.rsplit('/', 2)[1]  # name used internally
         new_title = title.rsplit('/', 2)[2]  # name used for title2
         Log('Genre path_name:title_name = %s:%s' % (pname, new_title))
+
         oc.add(DirectoryObject(
             key=Callback(DirectoryList, page=1, pname=pname, ntitle=new_title),
             title=new_title
             ))
+
     return oc
 
 ####################################################################################################
@@ -161,9 +152,14 @@ def Search(query=''):
 @route(PLUGIN_PREFIX + '/manga/{manga}')
 def MangaPage(manga, title):
     oc = ObjectContainer(title2=title, view_group='List')
+
     url = ROOT_URL + '/manga/' + manga + '/'
+
     html = HTML.ElementFromURL(url, timeout=10.0)
+
     for node in html.xpath('//div[@class="detail_list"]//li//a'):
         url = node.get('href') + '1.html'
-        oc.add(PhotoAlbumObject(url=url, title=node.text, thumb=None))
+        title = (node.text).strip()
+        oc.add(PhotoAlbumObject(url=url, title=title))
+
     return oc
