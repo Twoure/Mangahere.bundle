@@ -16,7 +16,11 @@ def MetadataObjectForURL(url):
     added here - the object's key and rating_key properties will be synthesised based on the URL.
     """
 
-    return PhotoAlbumObject(key=Callback(GetPhotos, url=url))
+    html = HTML.ElementFromURL(url)
+
+    title = html.xpath('//section[@class="readpage_top"]/div[@class="title"]//a/text()')[0].strip()
+
+    return PhotoAlbumObject(title=title)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -50,11 +54,7 @@ def GetPhotos(url):
             sub_html = HTML.ElementFromURL(page_url)
             img_url = sub_html.xpath('//section[@id="viewer"]/a/img[@onload]')[0].get('src').split('?')[0].strip()
 
-        r_title = Regex('^(.+?)(\d+)\.(jpg|JPG|png|PNG)').search(img_url)
-        if r_title:
-            title = r_title.group(2)
-        else:
-            title = img_url.split('/')[-1].split('.')[0]
+        title = str(i + 1)
 
         Log.Debug('*' * 80)
         Log.Debug('* %s | %s' %(img_url, title))
