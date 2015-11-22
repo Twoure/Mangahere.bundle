@@ -51,7 +51,7 @@ def GetPhotos(url):
             img_url = sub_html.xpath('//section[@id="viewer"]/a/img[@onload]')[0].get('src').split('?')[0].strip()
 
         r_title = Regex('^(.+?)(\d+)\.(jpg|JPG|png|PNG)').search(img_url)
-        if r_title
+        if r_title:
             title = r_title.group(2)
         else:
             title = img_url.split('/')[-1].split('.')[0]
