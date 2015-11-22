@@ -1,11 +1,6 @@
 Mangahere.bundle
 ===============
 
-Plex photo channel to read manga from MangaHere
+Plex photo channel to read manga from [MangaHere](http://www.mangahere.co/)
 
-Develpment plan:
-  * Move to MyAnime 'Manga' Section as a reference library, then use URL Services for each 'host'.
-  * Bookmarks, or favorites
-  * Sync Albums
-  * Add multiple working host
-  * Will most likely change name of channel if the multi-host option pans out
+**NOTE:** This channel times out on Plex Web and PHT.  Works with Android or IOS Smart Phones.
