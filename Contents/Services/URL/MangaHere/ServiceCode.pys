@@ -20,7 +20,10 @@ def MetadataObjectForURL(url):
 
     title = html.xpath('//section[@class="readpage_top"]/div[@class="title"]//a/text()')[0].strip()
 
-    return PhotoAlbumObject(title=title)
+    return PhotoAlbumObject(
+        key=Callback(GetPhotos, url=url),
+        title=title
+        )
 
 ####################################################################################################
 def MediaObjectsForURL(url):
