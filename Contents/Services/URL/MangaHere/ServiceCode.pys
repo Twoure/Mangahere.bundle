@@ -2,37 +2,28 @@
 
 """MangaHere Service code - Want it to gather all info on Manga and retrieve image urls."""
 
-####################################################################################################
-def NormalizeURL(url):
-    """This function should return a 'normalised' version of the given URL. Plex uses the URL"""
-
-    return url
+FALLBACK = 'http://www.mangahere.co/media/images/nopicture.jpg'
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-    """
-    This function should create and return a metadata object (for example, a VideoClipOb-
-    ject) and populate it with metadata from the given URL. Only the metadata should be
-    added here - the object's key and rating_key properties will be synthesised based on the URL.
-    """
 
-    html = HTML.ElementFromURL(url)
+    html = HTML.ElementFromURL(url, cacheTime=CACHE_1MINUTE)
 
     title = html.xpath('//section[@class="readpage_top"]/div[@class="title"]//a/text()')[0].strip()
 
+    ht = html.xpath('//meta[@property="og:image"]/@content')
+    rt = Regex(r'(https?\:\/\/[^\/]+\/.+?manga\/\d+\/)').search(ht[0]) if ht else None
+    thumb = rt.group(1) + 'cover.jpg' if rt else FALLBACK
+    Log(thumb)
+
     return PhotoAlbumObject(
         key=Callback(GetPhotos, url=url),
-        title=title
+        thumb=Resource.ContentsOfURLWithFallback([thumb, FALLBACK]),
+        title=title,
         )
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-    """
-    This function should create and return a list of media objects and part objects representing
-    the media available at the given URL. Callbacks may be used if obtaining the final media
-    location requires additional computation.
-    """
-
     return [MediaObject(parts=Callback(GetPhotos, url=url))]
 
 ####################################################################################################
@@ -42,32 +33,47 @@ def GetPhotos(url):
     'PhotoObject' container.
     """
 
-    html = HTML.ElementFromURL(url)
+    html = HTML.ElementFromURL(url, cacheTime=CACHE_1MINUTE)
 
     node = html.xpath('//select[@class="wid60"]')[0]
-    page_list = node.xpath('./option/@value')
-    chapter_title = html.xpath('//section[@class="readpage_top"]/div[@class="title"]//a/text()')[0].strip()
+    page_list = node.xpath('./option[@value]')
+    #chapter_title = html.xpath('//section[@class="readpage_top"]/div[@class="title"]//a/text()')[0].strip()
+    chapter_title = html.xpath('//h1/a/text()')[0].strip()
 
     oc = ObjectContainer(title1='MangaHere', title2=chapter_title)
 
+    """
     for i, page_url in enumerate(page_list):
         if i == 0:
-            img_url = html.xpath('//section[@id="viewer"]/a/img[@onload]')[0].get('src').split('?')[0].strip()
+            img_url = sub_html.xpath('//section[@id="viewer"]/a/img[@onload]/@src')[0]
+            #img_url = html.xpath('//section[@id="viewer"]/a/img[@onload]')[0].get('src').split('?')[0].strip()
         else:
             sub_html = HTML.ElementFromURL(page_url)
-            img_url = sub_html.xpath('//section[@id="viewer"]/a/img[@onload]')[0].get('src').split('?')[0].strip()
+            img_url = sub_html.xpath('//section[@id="viewer"]/a/img[@onload]/@src')[0]
 
         title = str(i + 1)
 
         Log.Debug('*' * 80)
         Log.Debug('* %s | %s' %(img_url, title))
         Log.Debug('*' * 80)
+    """
 
+    for item in page_list:
+        title = item.text
+        page_url = item.get('value')
         oc.add(
             PhotoObject(
-                key=img_url,
+                #key=img_url,
+                key=Callback(GetPhoto, url=page_url),
                 title=title.strip(),
-                thumb=img_url
-            ))
+                thumb=Callback(GetPhoto, url=page_url),
+                #thumb=img_url
+                )
+            )
 
     return oc
+
+####################################################################################################
+def GetPhoto(url):
+    html = HTML.ElementFromURL(url, cacheTime=CACHE_1MINUTE)
+    return Redirect(html.xpath('//section[@id="viewer"]/a/img[@onload]/@src')[0])
