@@ -22,10 +22,10 @@ This plugin creates a new Photo Channel within [Plex Media Server](https://plex.
 ##### Plex Clients:
 - Tested Working:
   - Plex Home Theater (Ubuntu 14.04 LTS, v1.4.1)
-  - OpenPHT (Ubuntu 14.04 LTS, v1.6.2)
+  - OpenPHT (Ubuntu 14.04 LTS, v1.6.1)
   - Android (4.4.2) (Plex Client App, v4.32.2.597)
   - Plex Media Player (1.1.4)
-  - Plex/Web (2.8.6)
+  - Plex Web (2.8.6)
   - Chromecast
 
 ## Install

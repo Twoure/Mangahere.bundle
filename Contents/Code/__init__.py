@@ -43,8 +43,7 @@ def Start():
     DirectoryObject.art = R(ART)
     InputDirectoryObject.art = R(ART)
 
-    #HTTP.CacheTime = CACHE_1HOUR
-    HTTP.CacheTime = CACHE_1MINUTE
+    HTTP.CacheTime = CACHE_1HOUR
     HTTP.Headers['User-Agent'] = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.113 Safari/537.36'
     version = get_channel_version()
 
@@ -73,10 +72,8 @@ def MainMenu():
 
     oc = ObjectContainer(view_group='List', no_cache=Client.Product in ['Plex Web'])
 
-    """
     # setup updater
     Updater.gui_update(PREFIX + '/updater', oc, GIT_REPO, tag='latest')
-    """
 
     oc.add(DirectoryObject(key=Callback(AlphabetList), title='Alphabets', thumb=R(ABC_ICON)))
     oc.add(DirectoryObject(key=Callback(GenreList), title='Genres', thumb=R(GENRES_ICON)))
@@ -217,6 +214,12 @@ def MangaPage(manga, title):
             continue
 
         date = node.xpath('.//span[@class="right"]/text()')
+        try:
+            oaa = Datetime.ParseDate(date[0]) if date else None
+        except:
+            Log.Exception(u"* Error Parsing Datetime for '{0}' >>>".format(href[0]))
+            oaa = None
+
         tagline = node.xpath('.//span/span/text()')
         chap_title = str(float(href[0].rsplit('/', 2)[1].split('c')[1]))
         url = href[0] + '1.html'
@@ -227,7 +230,7 @@ def MangaPage(manga, title):
             title=chap_title,
             source_title='MangaHere',
             tagline=tagline[0].strip() if tagline else None,
-            originally_available_at=Datetime.ParseDate(date[0]) if date else None,
+            originally_available_at=oaa,
             thumb=Resource.ContentsOfURLWithFallback([thumb, fallback]),
             art=R(ART),
             ))
