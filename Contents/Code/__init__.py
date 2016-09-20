@@ -10,13 +10,14 @@ from DumbTools import DumbKeyboard, DumbPrefs
 PREFIX                      = '/photos/Mangahere'
 TITLE                       = 'Mangahere'
 GIT_REPO                    = 'Twoure/{}.bundle'.format(TITLE)
-LIST_VIEW_CLIENTS           = ['Android', 'iOS']
 BASE_URL                    = 'http://www.mangahere.co'
 SEARCH_URL                  = BASE_URL + u'/search.php?name_method=cw&name={0}&author_method=cw&artist_method=cw&released_method=eq&advopts=1'
 
 # setup thumb/art globals
-ART                         = 'art-default_{0}.png'.format(Util.RandomInt(1, 3))
+ART                         = 'art-default.jpg'
 ICON                        = 'icon-default.png'
+ABC_ICON                    = 'icon-abc.png'
+GENRES_ICON                 = 'icon-genres.png'
 SEARCH_ICON                 = 'icon-search.png'
 PREFS_ICON                  = 'icon-prefs.png'
 
@@ -37,10 +38,14 @@ def Start():
     ObjectContainer.art = R(ART)
     ObjectContainer.title1 = TITLE
     ObjectContainer.view_group = 'InfoList'
+
     DirectoryObject.thumb = R(ICON)
+    DirectoryObject.art = R(ART)
+    InputDirectoryObject.art = R(ART)
 
     #HTTP.CacheTime = CACHE_1HOUR
     HTTP.CacheTime = CACHE_1MINUTE
+    HTTP.Headers['User-Agent'] = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.113 Safari/537.36'
     version = get_channel_version()
 
     Log.Debug('*' * 80)
@@ -68,36 +73,27 @@ def MainMenu():
 
     oc = ObjectContainer(view_group='List', no_cache=Client.Product in ['Plex Web'])
 
-    cp_match = Client.Platform in LIST_VIEW_CLIENTS
-    # set thumbs based on client
-    if cp_match:
-        prefs_thumb = None
-        search_thumb = None
-    else:
-        prefs_thumb = R(PREFS_ICON)
-        search_thumb = R(SEARCH_ICON)
-
+    """
     # setup updater
-    Updater.gui_update(
-        PREFIX + '/updater', oc, GIT_REPO,
-        tag='latest', list_view_clients=LIST_VIEW_CLIENTS
-        )
+    Updater.gui_update(PREFIX + '/updater', oc, GIT_REPO, tag='latest')
+    """
 
-    oc.add(DirectoryObject(key=Callback(AlphabetList), title='Alphabets'))
-    oc.add(DirectoryObject(key=Callback(GenreList), title='Genres'))
+    oc.add(DirectoryObject(key=Callback(AlphabetList), title='Alphabets', thumb=R(ABC_ICON)))
+    oc.add(DirectoryObject(key=Callback(GenreList), title='Genres', thumb=R(GENRES_ICON)))
 
     # setup prefs object
     if Client.Product in DumbPrefs.clients:
-        DumbPrefs(PREFIX, oc, title='Preferences', thumb=prefs_thumb)
+        DumbPrefs(PREFIX, oc, title='Preferences', thumb=R(PREFS_ICON))
     else:
-        oc.add(PrefsObject(title='Preferences', thumb=prefs_thumb))
+        oc.add(PrefsObject(title='Preferences', thumb=R(PREFS_ICON)))
 
     # setup search object
     if Client.Product in DumbKeyboard.clients:
-        DumbKeyboard(PREFIX, oc, Search, dktitle='Search', dkthumb=search_thumb)
+        DumbKeyboard(PREFIX, oc, Search, dktitle='Search', dkthumb=R(SEARCH_ICON))
     else:
         oc.add(InputDirectoryObject(
-            key=Callback(Search), title='Search Manga', prompt='Search Manga', thumb=search_thumb
+            key=Callback(Search), title='Search Manga',
+            prompt='Search Manga', thumb=R(SEARCH_ICON)
             ))
 
     return oc
@@ -127,8 +123,6 @@ def AlphabetList():
             title=pname
             ))
 
-    Log('Built ABC... Directory')
-
     return oc
 
 ####################################################################################################
@@ -136,8 +130,7 @@ def AlphabetList():
 def GenreList():
     """Generate Genre List"""
 
-    url = BASE_URL + '/directory/'
-    html = HTML.ElementFromURL(url)
+    html = HTML.ElementFromURL(BASE_URL + '/directory/')
 
     oc = ObjectContainer(title2='Manga By Genres', view_group='List')
 
@@ -145,7 +138,6 @@ def GenreList():
         title = node.get('href') + node.text
         pname = title.rsplit('/', 2)[1]
         new_title = title.rsplit('/', 2)[2]
-        #Log(u'Genre path_name:title_name = {0}:{1}'.format(pname, new_title))
 
         oc.add(DirectoryObject(
             key=Callback(DirectoryList, page=1, pname=pname, ntitle=new_title),
@@ -155,47 +147,34 @@ def GenreList():
     return oc
 
 ####################################################################################################
-@route(PREFIX + '/directory/{pname}')
+@route(PREFIX + '/directory/{pname}', page=int)
 def DirectoryList(page, pname, ntitle):
     """Get list of Mangas"""
 
-    url = BASE_URL + '/{0}/{1}.htm?{2}'.format(pname, page, PREFS_DICT[Prefs['sort_opt']])
-    #Log(u"Current sort options = '{0}': '{1}'".format(Prefs['sort_opt'], PREFS_DICT[Prefs['sort_opt']]))
-
-    html = HTML.ElementFromURL(url)
+    html = HTML.ElementFromURL(BASE_URL + '/{0}/{1}.htm?{2}'.format(pname, page, PREFS_DICT[Prefs['sort_opt']]))
 
     pages = html.xpath('//div[@class="next-page"]//a[@href]')
     total_pages = pages[int(len(pages))-2].text
-    #Log(total_pages)
 
-    main_title = u'{0}: Page {1} of {2}'.format(ntitle, page, total_pages)
-
-    oc = ObjectContainer(title2=main_title, view_group='List')
+    oc = ObjectContainer(title2=ntitle, view_group='List')
 
     for node in html.xpath('//div[@class="directory_list"]/ul/li'):
-        thumb = node.xpath('.//img')[0].get('src')
         node2 = node.xpath('.//div[@class="title"]/a')[0]
-        title = node2.text
+        title = node2.get('title').strip()
+        if ';' in title:
+            title = String.DecodeHTMLEntities(title)
         url = node2.get('href')
-        if url[-1] == '/':
-            url = url[:-1]
-
-        manga = url.rsplit('/', 2)[-1]
-
         oc.add(DirectoryObject(
-            key=Callback(MangaPage, manga=manga, title=title),
-            title=title,
-            thumb=thumb
+            key=Callback(MangaPage, manga=manga_from_url(url), title=title),
+            title=title, thumb=node.xpath('.//img')[0].get('src')
             ))
 
     nextpg_node = html.xpath('//div[@class="next-page"]//a[@class="next"]')
     if nextpg_node:
         nextpg = int(nextpg_node[0].get('href').split('.')[0])
-        Log.Debug('NextPage = {0}'.format(nextpg))
-
         oc.add(NextPageObject(
             key=Callback(DirectoryList, page=nextpg, pname=pname, ntitle=ntitle),
-            title='Next Page>>'
+            title='Next {0} of {1} >>'.format(nextpg, total_pages)
             ))
 
     return oc
@@ -206,21 +185,17 @@ def Search(query=''):
     """Search for Manga"""
 
     query = query.strip()
-    url = SEARCH_URL.format(String.Quote(query, usePlus=True))
-
-    html = HTML.ElementFromURL(url)
+    html = HTML.ElementFromURL(SEARCH_URL.format(String.Quote(query, usePlus=True)))
 
     oc = ObjectContainer(view_group='List')
 
     for node in html.xpath('//div[@class="result_search"]//dt'):
         url = node.xpath('./a')[0].get('href')
         title = node.xpath('./a')[0].text
-        if url[-1] == '/':
-            url = url[:-1]
-
-        manga = url.rsplit('/', 2)[-1]
-
-        oc.add(DirectoryObject(key=Callback(MangaPage, manga=manga, title=title), title=title))
+        oc.add(DirectoryObject(
+            key=Callback(MangaPage, manga=manga_from_url(url), title=title),
+            title=title
+            ))
 
     return oc
 
@@ -229,21 +204,76 @@ def Search(query=''):
 def MangaPage(manga, title):
     oc = ObjectContainer(title2=title, view_group='List')
 
-    url = BASE_URL + '/manga/' + manga + '/'
-
-    html = HTML.ElementFromURL(url, timeout=10.0)
+    html = HTML.ElementFromURL(BASE_URL + '/manga/' + manga + '/', timeout=10.0)
 
     fallback = 'http://www.mangahere.co/media/images/nopicture.jpg'
     ht = html.xpath('//meta[@property="og:image"]/@content')
     rt = Regex(r'(https?\:\/\/[^\/]+\/.+?manga\/\d+\/)').search(ht[0]) if ht else None
     thumb = rt.group(1) + 'cover.jpg' if rt else fallback
 
-    for node in html.xpath('//div[@class="detail_list"]//li//a'):
-        url = node.get('href') + '1.html'
-        chap_title = (node.text).replace(title, '').strip()
+    for node in html.xpath('//div[@class="detail_list"]/ul/li'):
+        href = node.xpath('.//a/@href')
+        if not href:
+            continue
+
+        date = node.xpath('.//span[@class="right"]/text()')
+        tagline = node.xpath('.//span/span/text()')
+        chap_title = str(float(href[0].rsplit('/', 2)[1].split('c')[1]))
+        url = href[0] + '1.html'
+
         oc.add(PhotoAlbumObject(
-            url=url, title=chap_title,
+            key=Callback(GetPhotoAlbum, url=url, title=chap_title),
+            rating_key=url,
+            title=chap_title,
+            source_title='MangaHere',
+            tagline=tagline[0].strip() if tagline else None,
+            originally_available_at=Datetime.ParseDate(date[0]) if date else None,
             thumb=Resource.ContentsOfURLWithFallback([thumb, fallback]),
+            art=R(ART),
             ))
 
     return oc
+
+####################################################################################################
+@route(PREFIX + '/get/photoablum')
+def GetPhotoAlbum(url, title):
+    oc = ObjectContainer(title2=title)
+
+    html = HTML.ElementFromURL(url)
+
+    node = html.xpath('//select[@class="wid60"]')[0]
+    page_list = node.xpath('./option[@value]')
+    for item in page_list:
+        oc.add(CreatePhotoObject(
+            title=item.text.strip(),
+            url=Callback(GetPhoto, url=item.get('value')),
+            ))
+
+    return oc
+
+####################################################################################################
+@route(PREFIX + '/create/photo-object', include_container=bool)
+def CreatePhotoObject(title, url, include_container=False, *args, **kwargs):
+    photo_object = PhotoObject(
+        key=Callback(CreatePhotoObject, title=title, url=url, include_container=True),
+        rating_key=url,
+        source_title='MangaHere',
+        title=title,
+        thumb=url,
+        art=R(ART),
+        items=[MediaObject(parts=[PartObject(key=url)])]
+        )
+
+    if include_container:
+        return ObjectContainer(objects=[photo_object])
+    return photo_object
+
+####################################################################################################
+@route(PREFIX + '/get/photo')
+def GetPhoto(url):
+    return Redirect(HTML.ElementFromURL(url).xpath('//section[@id="viewer"]/a/img[@onload]/@src')[0])
+
+####################################################################################################
+def manga_from_url(url):
+    url = url[:-1] if url.endswith('/') else url
+    return url.rsplit('/', 2)[-1]
