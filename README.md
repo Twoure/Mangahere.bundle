@@ -35,9 +35,8 @@ This plugin creates a new Photo Channel within [Plex Media Server](https://plex.
   - Unzip and rename the folder to **Mangahere.bundle**
   - Copy **Mangahere.bundle** into the PMS [Plug-ins](https://support.plex.tv/hc/en-us/articles/201106098-How-do-I-find-the-Plug-Ins-folder-) directory
   - Unix based platforms need to `chown plex:plex -R Mangahere.bundle` after moving it into the [Plug-ins](https://support.plex.tv/hc/en-us/articles/201106098-How-do-I-find-the-Plug-Ins-folder-) directory _(`user:group` may differ by platform)_
-  - **Restart PMS**
 
 ## Support
 
-- ~~Plex Forums Thread~~
+- [Plex Forums Thread](https://forums.plex.tv/discussion/233703)
 - [GitHub Issues](https://github.com/Twoure/Mangahere.bundle/issues)
