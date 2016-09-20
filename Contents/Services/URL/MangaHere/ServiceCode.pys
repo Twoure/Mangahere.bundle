@@ -14,12 +14,12 @@ def MetadataObjectForURL(url):
     ht = html.xpath('//meta[@property="og:image"]/@content')
     rt = Regex(r'(https?\:\/\/[^\/]+\/.+?manga\/\d+\/)').search(ht[0]) if ht else None
     thumb = rt.group(1) + 'cover.jpg' if rt else FALLBACK
-    Log(thumb)
 
     return PhotoAlbumObject(
         key=Callback(GetPhotos, url=url),
         thumb=Resource.ContentsOfURLWithFallback([thumb, FALLBACK]),
         title=title,
+        source_title='MangaHere',
         )
 
 ####################################################################################################
@@ -37,39 +37,16 @@ def GetPhotos(url):
 
     node = html.xpath('//select[@class="wid60"]')[0]
     page_list = node.xpath('./option[@value]')
-    #chapter_title = html.xpath('//section[@class="readpage_top"]/div[@class="title"]//a/text()')[0].strip()
     chapter_title = html.xpath('//h1/a/text()')[0].strip()
 
     oc = ObjectContainer(title1='MangaHere', title2=chapter_title)
 
-    """
-    for i, page_url in enumerate(page_list):
-        if i == 0:
-            img_url = sub_html.xpath('//section[@id="viewer"]/a/img[@onload]/@src')[0]
-            #img_url = html.xpath('//section[@id="viewer"]/a/img[@onload]')[0].get('src').split('?')[0].strip()
-        else:
-            sub_html = HTML.ElementFromURL(page_url)
-            img_url = sub_html.xpath('//section[@id="viewer"]/a/img[@onload]/@src')[0]
-
-        title = str(i + 1)
-
-        Log.Debug('*' * 80)
-        Log.Debug('* %s | %s' %(img_url, title))
-        Log.Debug('*' * 80)
-    """
-
     for item in page_list:
-        title = item.text
-        page_url = item.get('value')
-        oc.add(
-            PhotoObject(
-                #key=img_url,
-                key=Callback(GetPhoto, url=page_url),
-                title=title.strip(),
-                thumb=Callback(GetPhoto, url=page_url),
-                #thumb=img_url
-                )
-            )
+        oc.add(PhotoObject(
+            key=Callback(GetPhoto, url=item.get('value')),
+            title=item.text.strip(),
+            thumb=Callback(GetPhoto, url=item.get('value')),
+            ))
 
     return oc
 

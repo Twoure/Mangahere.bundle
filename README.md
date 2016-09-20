@@ -1,7 +1,7 @@
 MangaHere
 ===========
 
-[![GitHub issues](https://img.shields.io/github/issues/Twoure/MangaHere.bundle.svg?style=flat)](https://github.com/Twoure/MangaHere.bundle/issues) [![](https://img.shields.io/github/release/Twoure/MangaHere.bundle.svg?style=flat)](https://github.com/Twoure/MangaHere.bundle/releases)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/c94a56ddb7a24cfc97e4763d3972103b)](https://www.codacy.com/app/twoure/Mangahere-bundle?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Twoure/Mangahere.bundle&amp;utm_campaign=Badge_Grade) [![GitHub issues](https://img.shields.io/github/issues/Twoure/MangaHere.bundle.svg?style=flat)](https://github.com/Twoure/MangaHere.bundle/issues) [![](https://img.shields.io/github/release/Twoure/MangaHere.bundle.svg?style=flat)](https://github.com/Twoure/MangaHere.bundle/releases)
 
 This plugin creates a new Photo Channel within [Plex Media Server](https://plex.tv/) (PMS) to view [Manga](https://en.wikipedia.org/wiki/Manga) from [Mangahere.co](http://www.mangahere.co/).  It is currently under development and as such, should be considered alpha software and potentially unstable.
 
